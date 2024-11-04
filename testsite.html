@@ -1,0 +1,263 @@
+<html>
+<head>
+    <title>Poon</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet"/>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+        .logo-icon {
+            background-color: #1E3A8A; /* Blue color */
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-weight: bold;
+            font-size: 1.25rem;
+        }
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-left: 0.5rem;
+            color: #1E3A8A; /* Blue color */
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <header class="bg-white shadow-md">
+        <div class="container mx-auto px-4 py-2 flex justify-between items-center">
+            <div class="logo">
+                <div class="logo-icon">P</div>
+                <div class="logo-text">oon</div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <input class="px-4 py-2 border rounded-full" placeholder="Search" type="text" id="searchInput"/>
+                <button class="px-4 py-2 bg-blue-600 text-white rounded-full" onclick="searchChannels()">
+                    Search
+                </button>
+                <a class="text-gray-600 cursor-pointer" onclick="showUploadModal()">
+                    <i class="fas fa-upload"></i>
+                </a>
+                <a class="text-gray-600 cursor-pointer" onclick="showNotifications()">
+                    <i class="fas fa-bell"></i>
+                </a>
+                <a class="text-gray-600 cursor-pointer" onclick="showUserMenu()">
+                    <i class="fas fa-user-circle"></i>
+                </a>
+            </div>
+        </div>
+    </header>
+    <main class="container mx-auto px-4 py-6">
+        <div id="videoGrid" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <!-- No videos uploaded yet -->
+            <div class="col-span-full text-center text-gray-600">
+                No videos uploaded yet.
+            </div>
+        </div>
+    </main>
+
+    <!-- Upload Modal -->
+    <div id="uploadModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center hidden">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-96">
+            <h2 class="text-2xl font-bold mb-4">Upload Video</h2>
+            <input type="text" id="videoTitle" placeholder="Video Title" class="w-full px-4 py-2 border rounded mb-4"/>
+            <input type="text" id="videoDescription" placeholder="Video Description" class="w-full px-4 py-2 border rounded mb-4"/>
+            <input type="file" id="videoFile" class="w-full px-4 py-2 border rounded mb-4"/>
+            <div class="flex justify-end">
+                <button class="px-4 py-2 bg-blue-600 text-white rounded" onclick="uploadVideo()">Upload</button>
+                <button class="px-4 py-2 bg-gray-600 text-white rounded ml-2" onclick="closeUploadModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Menu -->
+    <div id="userMenu" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center hidden">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-96">
+            <h2 class="text-2xl font-bold mb-4">User Menu</h2>
+            <button class="px-4 py-2 bg-blue-600 text-white rounded w-full mb-4" onclick="createChannel()">Create Channel</button>
+            <button class="px-4 py-2 bg-blue-600 text-white rounded w-full mb-4" onclick="showProfileModal()">Edit Profile</button>
+            <button class="px-4 py-2 bg-gray-600 text-white rounded w-full" onclick="closeUserMenu()">Close</button>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div id="profileModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center hidden">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-96">
+            <h2 class="text-2xl font-bold mb-4">Edit Profile</h2>
+            <input type="text" id="profileName" placeholder="Channel Name" class="w-full px-4 py-2 border rounded mb-4"/>
+            <input type="file" id="profilePicture" class="w-full px-4 py-2 border rounded mb-4"/>
+            <div class="flex justify-end">
+                <button class="px-4 py-2 bg-blue-600 text-white rounded" onclick="updateProfile()">Save</button>
+                <button class="px-4 py-2 bg-gray-600 text-white rounded ml-2" onclick="closeProfileModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications Modal -->
+    <div id="notificationsModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center hidden">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-96">
+            <h2 class="text-2xl font-bold mb-4">Notifications</h2>
+            <p>No new notifications.</p>
+            <button class="px-4 py-2 bg-gray-600 text-white rounded mt-4 w-full" onclick="closeNotificationsModal()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        let videos = [];
+        let channels = [];
+        let currentUser = null;
+
+        function showUploadModal() {
+            if (!currentUser) {
+                alert('You need to create a channel first.');
+                return;
+            }
+            document.getElementById('uploadModal').classList.remove('hidden');
+        }
+
+        function closeUploadModal() {
+            document.getElementById('uploadModal').classList.add('hidden');
+        }
+
+        function showUserMenu() {
+            document.getElementById('userMenu').classList.remove('hidden');
+        }
+
+        function closeUserMenu() {
+            document.getElementById('userMenu').classList.add('hidden');
+        }
+
+        function showProfileModal() {
+            if (!currentUser) {
+                alert('You need to create a channel first.');
+                return;
+            }
+            document.getElementById('profileModal').classList.remove('hidden');
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.add('hidden');
+        }
+
+        function showNotifications() {
+            document.getElementById('notificationsModal').classList.remove('hidden');
+        }
+
+        function closeNotificationsModal() {
+            document.getElementById('notificationsModal').classList.add('hidden');
+        }
+
+        function uploadVideo() {
+            const title = document.getElementById('videoTitle').value;
+            const description = document.getElementById('videoDescription').value;
+            const file = document.getElementById('videoFile').files[0];
+
+            if (title && description && file) {
+                const video = {
+                    title,
+                    description,
+                    file: URL.createObjectURL(file),
+                    views: 0,
+                    likes: 0,
+                    channel: currentUser
+                };
+                videos.push(video);
+                renderVideos();
+                closeUploadModal();
+            } else {
+                alert('Please fill in all fields and select a video file.');
+            }
+        }
+
+        function likeVideo(index) {
+            videos[index].likes += 1;
+            renderVideos();
+        }
+
+        function createChannel() {
+            const channelName = prompt('Enter channel name:');
+            if (channelName) {
+                currentUser = {
+                    name: channelName,
+                    picture: null,
+                    subscribers: 0
+                };
+                channels.push(currentUser);
+                alert(`Channel "${channelName}" created successfully!`);
+                closeUserMenu();
+            }
+        }
+
+        function updateProfile() {
+            const name = document.getElementById('profileName').value;
+            const picture = document.getElementById('profilePicture').files[0];
+
+            if (name) {
+                currentUser.name = name;
+            }
+            if (picture) {
+                currentUser.picture = URL.createObjectURL(picture);
+            }
+            alert('Profile updated successfully!');
+            closeProfileModal();
+            renderVideos();
+        }
+
+        function searchChannels() {
+            const searchInput = document.getElementById('searchInput').value.toLowerCase();
+            const filteredChannels = channels.filter(channel => channel.name.toLowerCase().includes(searchInput));
+            alert(`Found channels: ${filteredChannels.map(channel => channel.name).join(', ')}`);
+        }
+
+        function subscribeToChannel(channelName) {
+            const channel = channels.find(ch => ch.name === channelName);
+            if (channel) {
+                channel.subscribers += 1;
+                alert(`Subscribed to ${channelName}`);
+                renderVideos();
+            }
+        }
+
+        function renderVideos() {
+            const videoGrid = document.getElementById('videoGrid');
+            videoGrid.innerHTML = '';
+            if (videos.length === 0) {
+                videoGrid.innerHTML = '<div class="col-span-full text-center text-gray-600">No videos uploaded yet.</div>';
+            } else {
+                videos.forEach((video, index) => {
+                    const videoElement = document.createElement('div');
+                    videoElement.classList.add('bg-white', 'shadow-md', 'rounded-lg', 'overflow-hidden');
+                    videoElement.innerHTML = `
+                        <video controls class="w-full">
+                            <source src="${video.file}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        <div class="p-4">
+                            <h2 class="text-lg font-bold">${video.title}</h2>
+                            <p class="text-gray-600">${video.description}</p>
+                            <div class="flex items-center justify-between mt-2">
+                                <span class="text-gray-600">${video.views} views</span>
+                                <button class="text-blue-600" onclick="likeVideo(${index})">
+                                    <i class="fas fa-thumbs-up"></i> ${video.likes}
+                                </button>
+                            </div>
+                            <div class="flex items-center justify-between mt-2">
+                                <span class="text-gray-600">Channel: ${video.channel.name}</span>
+                                <button class="text-blue-600" onclick="subscribeToChannel('${video.channel.name}')">
+                                    Subscribe (${video.channel.subscribers})
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    videoGrid.appendChild(videoElement);
+                });
+            }
+        }
+    </script>
+</body>
+</html>
